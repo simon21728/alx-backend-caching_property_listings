@@ -16,13 +16,11 @@ def get_all_properties():
 # New function: get Redis cache metrics
 def get_redis_cache_metrics():
     try:
-        redis_conn = get_redis_connection("default")  # default cache alias
-        info = redis_conn.info("stats")  # get Redis stats
+        redis_conn = get_redis_connection("default")
+        info = redis_conn.info("stats")
         hits = info.get("keyspace_hits", 0)
         misses = info.get("keyspace_misses", 0)
-        total = hits + misses
-        hit_ratio = hits / total if total > 0 else 0.0
-        hit_ratio = hits / (hits + misses)
+        hit_ratio = hits / (hits + misses)  
 
         metrics = {
             "keyspace_hits": hits,
