@@ -1,35 +1,51 @@
 version: '3.9'
 
 services:
-  postgres:
-    image: postgres:16
+  postgres_db:
+    image: postgres:latest
     container_name: postgres_db
     environment:
-      POSTGRES_DB: travel_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: travel_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend_network
 
-  redis:
-    image: redis:alpine
+  redis_cache:
+    image: redis:latest
     container_name: redis_cache
     ports:
       - "6379:6379"
+    networks:
+      - backend_network
 
-  web:
+  django_app:
     build: .
     container_name: django_app
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
+    command: >
+      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
+    environment:
+      - POSTGRES_HOST=postgres_db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=travel_db
+      - REDIS_HOST=redis_cache
+      - REDIS_PORT=6379
     depends_on:
-      - postgres
-      - redis
+      - postgres_db
+      - redis_cache
+    networks:
+      - backend_network
 
 volumes:
   postgres_data:
+
+networks:
+  backend_network:
